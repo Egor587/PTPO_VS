@@ -22,5 +22,8 @@ void processWordCounting(const std::vector<std::string>& fileList, const std::st
 
 /// @brief Выводит главное меню программы в консоль.
 void printConsoleMenu();
-
+/// @brief Индексирует позиции каждого слова во всех указанных файлах и сохраняет результат.
+/// @param fileList Список имён файлов для обработки.
+/// @param outputFileName Имя файла для сохранения результатов.
+void processWordIndexing(const std::vector<std::string>& fileList, const std::string& outputFileName);
 #endif 

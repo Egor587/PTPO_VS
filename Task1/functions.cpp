@@ -160,6 +160,49 @@ void processWordCounting(const std::vector<std::string>& fileList, const std::st
 void printConsoleMenu() {
     std::cout << "Лабораторная работа 1" << std::endl;
     std::cout << "1 - Посчитать все слова во всех томах" << std::endl;
+    std::cout << "2 - Индексация позиций слов во всех томах" << std::endl;
     std::cout << "0 - Выход" << std::endl;
     std::cout << "Выберите действие: ";
+}
+void processWordIndexing(const std::vector<std::string>& fileList, const std::string& outputFileName) {
+    std::cout << "\nИндексация позиций слов..." << std::endl;
+
+    std::map<std::string, std::vector<int>> wordPositionsMap;
+
+    for (size_t fileIndex = 0; fileIndex < fileList.size(); ++fileIndex) {
+        std::string fileData = readFileContent(fileList[fileIndex]);
+        if (fileData.empty()) {
+            continue;
+        }
+
+        std::string cleanedText = sanitizeAndNormalizeUTF8(fileData);
+        std::stringstream bufferStream(cleanedText);
+        std::string currentWord;
+        int currentPosition = 0;
+
+        while (bufferStream >> currentWord) {
+            wordPositionsMap[currentWord].push_back(currentPosition);
+            currentPosition++;
+        }
+    }
+
+    FILE* outputPointer = fopen(outputFileName.c_str(), "w");
+    if (!outputPointer) {
+        std::cout << "Ошибка при создании файла" << std::endl;
+        return;
+    }
+
+    for (const auto& pairItem : wordPositionsMap) {
+        fprintf(outputPointer, "%s - ", pairItem.first.c_str());
+        for (size_t positionIndex = 0; positionIndex < pairItem.second.size(); ++positionIndex) {
+            if (positionIndex > 0) {
+                fprintf(outputPointer, ", ");
+            }
+            fprintf(outputPointer, "%d", pairItem.second[positionIndex]);
+        }
+        fprintf(outputPointer, "\n");
+    }
+
+    fclose(outputPointer);
+    std::cout << "Успешно! Индексация позиций сохранена в файл: " << outputFileName << std::endl;
 }

@@ -17,7 +17,8 @@ int main() {
         "Война и мир. Том 4.txt"
     };
 
-    const std::string resultFileName = "result_task1.txt";
+    const std::string resultTask1FileName = "result_task1.txt";
+    const std::string resultTask2FileName = "result_task2.txt";
     int userChoice = -1;
 
     while (userChoice != 0) {
@@ -29,7 +30,10 @@ int main() {
         }
 
         if (userChoice == 1) {
-            processWordCounting(volumeFiles, resultFileName);
+            processWordCounting(volumeFiles, resultTask1FileName);
+        }
+        else if (userChoice == 2) {
+            processWordIndexing(volumeFiles, resultTask2FileName);
         }
         else if (userChoice == 0) {
             std::cout << "Завершение работы программы" << std::endl;
