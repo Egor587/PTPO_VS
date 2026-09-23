@@ -1,20 +1,25 @@
 ﻿#define _CRT_SECURE_NO_WARNINGS
-
+#include <clocale>
 #include <iostream>
 #include <windows.h>
 #include <vector>
 #include <string>
+#include <cstdlib>
+#include <ctime>
 #include "functions.h"
 
 int main() {
+    setlocale(LC_ALL, "ru_RU.UTF-8");
     SetConsoleCP(65001);
     SetConsoleOutputCP(65001);
 
+    srand(static_cast<unsigned int>(time(nullptr)));
+
     std::vector<std::string> volumeFiles = {
-        "Война и мир. Том 1.txt",
-        "Война и мир. Том 2.txt",
-        "Война и мир. Том 3.txt",
-        "Война и мир. Том 4.txt"
+        "War_and_Peace_Vol1.txt",
+        "War_and_Peace_Vol2.txt",
+        "War_and_Peace_Vol3.txt",
+        "War_and_Peace_Vol4.txt"
     };
 
     const std::string resultTask1FileName = "result_task1.txt";
@@ -35,11 +40,11 @@ int main() {
         else if (userChoice == 2) {
             processWordIndexing(volumeFiles, resultTask2FileName);
         }
-        else if (userChoice == 0) {
-            std::cout << "Завершение работы программы" << std::endl;
+        else if (userChoice == 3) {
+            runTaskThree();
         }
         else {
-            std::cout << "Неверный ввод, попробуйте снова" << std::endl;
+            std::cout << "Invalid input, try again" << std::endl;
         }
     }
 
