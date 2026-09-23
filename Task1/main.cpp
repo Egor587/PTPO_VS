@@ -1,5 +1,5 @@
 ﻿#define _CRT_SECURE_NO_WARNINGS
-#include <clocale>
+
 #include <iostream>
 #include <windows.h>
 #include <vector>
@@ -9,7 +9,6 @@
 #include "functions.h"
 
 int main() {
-    setlocale(LC_ALL, "ru_RU.UTF-8");
     SetConsoleCP(65001);
     SetConsoleOutputCP(65001);
 
@@ -42,9 +41,6 @@ int main() {
         }
         else if (userChoice == 3) {
             runTaskThree();
-        }
-        else {
-            std::cout << "Invalid input, try again" << std::endl;
         }
     }
 

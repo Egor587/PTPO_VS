@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <algorithm>
 
 /// @brief Подготавливает текст: переводит буквы в нижний регистр и заменяет любую пунктуацию и тире на пробелы.
 /// @param rawText Исходный текст из файла.
@@ -45,11 +46,11 @@ std::vector<int> generateRandomVector(int count, int minValue, int maxValue);
 /// @param title Заголовок перед выводом.
 void printIntVector(const std::vector<int>& numbers, const std::string& title);
 
-/// @brief Задание 3а: все простые числа в векторе возводит в квадрат.
+/// @brief Задание 3а: все простые числа в векторе возводит в квадрат (использует std::transform).
 /// @param numbers Вектор чисел (изменяется).
 void squarePrimeNumbers(std::vector<int>& numbers);
 
-/// @brief Задание 3б: сортирует вектор: сначала нечётные по возрастанию, затем чётные по убыванию.
+/// @brief Задание 3б: сортирует вектор: сначала нечётные по возрастанию, затем чётные по убыванию (использует std::sort).
 /// @param numbers Вектор чисел (изменяется).
 void sortOddAscEvenDesc(std::vector<int>& numbers);
 

@@ -245,69 +245,55 @@ void printIntVector(const std::vector<int>& numbers, const std::string& title) {
 }
 
 void squarePrimeNumbers(std::vector<int>& numbers) {
-    // Проходим по всем элементам, если число простое — возводим в квадрат
-    for (size_t i = 0; i < numbers.size(); i++) {
-        if (isPrime(numbers[i])) {
-            numbers[i] = numbers[i] * numbers[i];
-        }
-    }
+    //Задание 3а
+    std::transform(numbers.begin(), numbers.end(), numbers.begin(),
+        [](int value) {
+            if (isPrime(value)) {
+                return value * value;
+            }
+            return value;
+        });
 }
 
 void sortOddAscEvenDesc(std::vector<int>& numbers) {
-    // Сначала нечётные по возрастанию
-    for (size_t i = 0; i < numbers.size(); i++) {
-        for (size_t j = i + 1; j < numbers.size(); j++) {
-            bool iOdd = (numbers[i] % 2 != 0);
-            bool jOdd = (numbers[j] % 2 != 0);
+    //Задание 3б
+    std::sort(numbers.begin(), numbers.end(),
+        [](int leftValue, int rightValue) {
+            bool leftIsOdd = (leftValue % 2 != 0);
+            bool rightIsOdd = (rightValue % 2 != 0);
 
-            // Если слева чётное, а справа нечётное — меняем местами
-            if (!iOdd && jOdd) {
-                int temp = numbers[i];
-                numbers[i] = numbers[j];
-                numbers[j] = temp;
+            // Нечётные всегда идут раньше чётных
+            if (leftIsOdd != rightIsOdd) {
+                return leftIsOdd;
             }
-            // Если оба нечётные и левое больше правого — меняем (возрастание)
-            else if (iOdd && jOdd && numbers[i] > numbers[j]) {
-                int temp = numbers[i];
-                numbers[i] = numbers[j];
-                numbers[j] = temp;
+            // Оба нечётные — по возрастанию
+            if (leftIsOdd) {
+                return leftValue < rightValue;
             }
-            // Если оба чётные и левое меньше правого — меняем (убывание)
-            else if (!iOdd && !jOdd && numbers[i] < numbers[j]) {
-                int temp = numbers[i];
-                numbers[i] = numbers[j];
-                numbers[j] = temp;
-            }
-        }
-    }
+            // Оба чётные — по убыванию
+            return leftValue > rightValue;
+        });
 }
 
 std::vector<int> filterUniqueInRange(const std::vector<int>& numbers, int low, int high) {
-    std::vector<int> result;
+    //Задание 3в
 
-    for (size_t i = 0; i < numbers.size(); i++) {
-        int current = numbers[i];
+    //Отбираем элементы, попадающие в диапазон
+    std::vector<int> filtered;
+    std::copy_if(numbers.begin(), numbers.end(), std::back_inserter(filtered),
+        [low, high](int value) {
+            return value >= low && value <= high;
+        });
 
-        // Проверяем, что число в диапазоне
-        if (current < low || current > high) {
-            continue;
-        }
+    //Сортировка
+    std::sort(filtered.begin(), filtered.end());
 
-        // Проверяем, что такого числа ещё нет в результате
-        bool alreadyExists = false;
-        for (size_t j = 0; j < result.size(); j++) {
-            if (result[j] == current) {
-                alreadyExists = true;
-                break;
-            }
-        }
+    //Удаление подряд идущих дубликатов
+    std::vector<int>::iterator lastUnique = std::unique(filtered.begin(), filtered.end());
 
-        if (!alreadyExists) {
-            result.push_back(current);
-        }
-    }
+    filtered.erase(lastUnique, filtered.end());
 
-    return result;
+    return filtered;
 }
 
 void runTaskThree() {
@@ -315,7 +301,6 @@ void runTaskThree() {
 
     std::vector<int> baseArray;
 
-    // Спрашиваем пользователя: сгенерировать массив или использовать готовый
     int sourceChoice = -1;
     while (sourceChoice != 1 && sourceChoice != 2) {
         std::cout << "1 - Использовать заранее заготовленный массив" << std::endl;
@@ -335,12 +320,10 @@ void runTaskThree() {
     }
 
     if (sourceChoice == 1) {
-        // Заранее заготовленный массив
         baseArray = { 12, 7, 5, 18, 3, 20, 11, 9, 4, 13, 6, 2, 15, 8, 17 };
         std::cout << "\nИспользуется заготовленный массив." << std::endl;
     }
     else {
-        // Генерация случайного массива
         int count = 0;
         int minValue = 0;
         int maxValue = 0;
@@ -358,19 +341,19 @@ void runTaskThree() {
 
     printIntVector(baseArray, "Исходный массив");
 
-    // Задание 3а: возведение простых чисел в квадрат
+    // Задание 3а
     std::vector<int> arrayForTaskA = baseArray;
     squarePrimeNumbers(arrayForTaskA);
     std::cout << "\nЗадание 3а: простые числа в квадрате" << std::endl;
     printIntVector(arrayForTaskA, "Результат");
 
-    // Задание 3б: сортировка: нечётные по возрастанию, чётные по убыванию
+    // Задание 3б
     std::vector<int> arrayForTaskB = baseArray;
     sortOddAscEvenDesc(arrayForTaskB);
     std::cout << "\nЗадание 3б: нечётные, чётные" << std::endl;
     printIntVector(arrayForTaskB, "Результат");
 
-    // Задание 3в: уникальные числа в диапазоне
+    // Задание 3в
     int low, high;
     std::cout << "\nЗадание 3в: уникальные числа в диапазоне" << std::endl;
     std::cout << "Введите нижнюю границу диапазона: ";
@@ -381,7 +364,7 @@ void runTaskThree() {
     std::vector<int> arrayForTaskC = filterUniqueInRange(baseArray, low, high);
     printIntVector(arrayForTaskC, "Уникальные числа в диапазоне");
 
-    // === Сохранение результатов в файл result_task3.txt ===
+    // Сохранение в файл result_task3.txt
     const std::string outputFileName = "result_task3.txt";
     FILE* outputPointer = fopen(outputFileName.c_str(), "w");
     if (!outputPointer) {
@@ -391,7 +374,6 @@ void runTaskThree() {
 
     fprintf(outputPointer, "Задание 3\n\n");
 
-    // Исходный массив
     fprintf(outputPointer, "Исходный массив: ");
     for (size_t i = 0; i < baseArray.size(); i++) {
         if (i > 0) {
@@ -401,7 +383,6 @@ void runTaskThree() {
     }
     fprintf(outputPointer, "\n\n");
 
-    // Задание 3а
     fprintf(outputPointer, "Задание 3а: простые числа в квадрате\n");
     fprintf(outputPointer, "Результат: ");
     for (size_t i = 0; i < arrayForTaskA.size(); i++) {
@@ -412,7 +393,6 @@ void runTaskThree() {
     }
     fprintf(outputPointer, "\n\n");
 
-    // Задание 3б
     fprintf(outputPointer, "Задание 3б: нечётные по возрастанию, чётные по убыванию\n");
     fprintf(outputPointer, "Результат: ");
     for (size_t i = 0; i < arrayForTaskB.size(); i++) {
@@ -423,7 +403,6 @@ void runTaskThree() {
     }
     fprintf(outputPointer, "\n\n");
 
-    // Задание 3в
     fprintf(outputPointer, "Задание 3в: уникальные числа в диапазоне [%d; %d]\n", low, high);
     fprintf(outputPointer, "Результат: ");
     for (size_t i = 0; i < arrayForTaskC.size(); i++) {
