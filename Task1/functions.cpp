@@ -1,5 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+#include <chrono>
+#include "Resources.h"
 #include "functions.h"
 #include <cstdio>
 #include <iostream>
@@ -98,38 +100,39 @@ std::string sanitizeAndNormalizeUTF8(const std::string& rawText) {
     return resultText;
 }
 
-std::string readFileContent(const std::string& inputFileName) {
+std::string readFileInChunks(const std::string& inputFileName, size_t chunkSize) {
     FILE* filePointer = fopen(inputFileName.c_str(), "rb");
     if (!filePointer) {
-        std::cout << "Не удалось открыть файл: " << inputFileName << std::endl;
+        std::cout << Resources::get("CantOpenFile") << inputFileName << std::endl;
         return "";
     }
 
-    fseek(filePointer, 0, SEEK_END);
-    long fileSize = ftell(filePointer);
-    fseek(filePointer, 0, SEEK_SET);
+    std::string totalContent;
+    totalContent.reserve(chunkSize);
 
-    if (fileSize <= 0) {
-        fclose(filePointer);
-        return "";
+    std::vector<char> buffer(chunkSize);
+
+    while (true) {
+        size_t bytesRead = fread(buffer.data(), 1, chunkSize, filePointer);
+        if (bytesRead == 0) {
+            break;
+        }
+        totalContent.append(buffer.data(), bytesRead);
     }
 
-    std::string bufferContent;
-    bufferContent.resize(fileSize);
-
-    size_t bytesRead = fread(&bufferContent[0], 1, fileSize, filePointer);
     fclose(filePointer);
-
-    return bufferContent;
+    return totalContent;
 }
 
-void processWordCounting(const std::vector<std::string>& fileList, const std::string& outputFileName) {
-    std::cout << "\nОбработка файлов..." << std::endl;
+void processWordCountingWithTiming(const std::vector<std::string>& fileList, const std::string& outputFileName) {
+    std::cout << Resources::get("Processing") << std::endl;
+
+    std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
 
     std::map<std::string, int> wordFrequencyMap;
 
     for (size_t fileIndex = 0; fileIndex < fileList.size(); ++fileIndex) {
-        std::string fileData = readFileContent(fileList[fileIndex]);
+        std::string fileData = readFileInChunks(fileList[fileIndex], 4 * 1024 * 1024);
         if (fileData.empty()) {
             continue;
         }
@@ -146,34 +149,41 @@ void processWordCounting(const std::vector<std::string>& fileList, const std::st
 
     FILE* outputPointer = fopen(outputFileName.c_str(), "w");
     if (!outputPointer) {
-        std::cout << "Ошибка при создании файла" << std::endl;
+        std::cout << "Error: cannot create output file" << std::endl;
         return;
     }
 
-    for (const auto& pairItem : wordFrequencyMap) {
-        fprintf(outputPointer, "%s - %d\n", pairItem.first.c_str(), pairItem.second);
+    for (std::map<std::string, int>::iterator it = wordFrequencyMap.begin(); it != wordFrequencyMap.end(); ++it) {
+        fprintf(outputPointer, "%s - %d\n", it->first.c_str(), it->second);
     }
 
     fclose(outputPointer);
-    std::cout << "Результаты подсчёта сохранены в файл: " << outputFileName << std::endl;
+
+    std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
+    long long ms = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
+
+    std::cout << Resources::get("SavedTo") << outputFileName << std::endl;
+    std::cout << Resources::get("TimeElapsed") << ms << std::endl;
 }
 
 void printConsoleMenu() {
-    std::cout << "Лабораторная работа 1" << std::endl;
-    std::cout << "1 - Посчитать все слова во всех томах" << std::endl;
-    std::cout << "2 - Индексация позиций слов во всех томах" << std::endl;
-    std::cout << "3 - Задание 3 (простые числа, сортировка, диапазон)" << std::endl;
-    std::cout << "0 - Выход" << std::endl;
-    std::cout << "Выберите действие: ";
+    std::cout << Resources::get("MenuTitle") << std::endl;
+    std::cout << Resources::get("Punkt1") << std::endl;
+    std::cout << Resources::get("Punkt2") << std::endl;
+    std::cout << Resources::get("Punkt3") << std::endl;
+    std::cout << Resources::get("Exit") << std::endl;
+    std::cout << Resources::get("Choose");
 }
 
-void processWordIndexing(const std::vector<std::string>& fileList, const std::string& outputFileName) {
-    std::cout << "\nИндексация позиций слов..." << std::endl;
+void processWordIndexingWithTiming(const std::vector<std::string>& fileList, const std::string& outputFileName) {
+    std::cout << Resources::get("Indexing") << std::endl;
+
+    std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
 
     std::map<std::string, std::vector<int>> wordPositionsMap;
 
     for (size_t fileIndex = 0; fileIndex < fileList.size(); ++fileIndex) {
-        std::string fileData = readFileContent(fileList[fileIndex]);
+        std::string fileData = readFileInChunks(fileList[fileIndex], 4 * 1024 * 1024);
         if (fileData.empty()) {
             continue;
         }
@@ -191,23 +201,28 @@ void processWordIndexing(const std::vector<std::string>& fileList, const std::st
 
     FILE* outputPointer = fopen(outputFileName.c_str(), "w");
     if (!outputPointer) {
-        std::cout << "Ошибка при создании файла" << std::endl;
+        std::cout << "Error: cannot create output file" << std::endl;
         return;
     }
 
-    for (const auto& pairItem : wordPositionsMap) {
-        fprintf(outputPointer, "%s - ", pairItem.first.c_str());
-        for (size_t positionIndex = 0; positionIndex < pairItem.second.size(); ++positionIndex) {
+    for (std::map<std::string, std::vector<int>>::iterator it = wordPositionsMap.begin(); it != wordPositionsMap.end(); ++it) {
+        fprintf(outputPointer, "%s - ", it->first.c_str());
+        for (size_t positionIndex = 0; positionIndex < it->second.size(); ++positionIndex) {
             if (positionIndex > 0) {
                 fprintf(outputPointer, ", ");
             }
-            fprintf(outputPointer, "%d", pairItem.second[positionIndex]);
+            fprintf(outputPointer, "%d", it->second[positionIndex]);
         }
         fprintf(outputPointer, "\n");
     }
 
     fclose(outputPointer);
-    std::cout << "Индексация позиций сохранена в файл: " << outputFileName << std::endl;
+
+    std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
+    long long ms = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
+
+    std::cout << Resources::get("SavedTo") << outputFileName << std::endl;
+    std::cout << Resources::get("TimeElapsed") << ms << std::endl;
 }
 
 //Задание 3
@@ -297,15 +312,14 @@ std::vector<int> filterUniqueInRange(const std::vector<int>& numbers, int low, i
 }
 
 void runTaskThree() {
-    std::cout << "\nЗадание 3\n" << std::endl;
+    std::cout << "\n" << Resources::get("Task3Title") << "\n" << std::endl;
 
     std::vector<int> baseArray;
 
     int sourceChoice = -1;
     while (sourceChoice != 1 && sourceChoice != 2) {
-        std::cout << "1 - Использовать заранее заготовленный массив" << std::endl;
-        std::cout << "2 - Сгенерировать случайный массив" << std::endl;
-        std::cout << "Ваш выбор: ";
+        std::cout << Resources::get("SourceChoice") << std::endl;
+        std::cout << Resources::get("YourChoice");
 
         if (!(std::cin >> sourceChoice)) {
             std::cin.clear();
@@ -315,104 +329,86 @@ void runTaskThree() {
         }
 
         if (sourceChoice != 1 && sourceChoice != 2) {
-            std::cout << "Неверный ввод, попробуйте снова" << std::endl;
+            std::cout << Resources::get("InvalidInput") << std::endl;
         }
     }
 
     if (sourceChoice == 1) {
         baseArray = { 12, 7, 5, 18, 3, 20, 11, 9, 4, 13, 6, 2, 15, 8, 17 };
-        std::cout << "\nИспользуется заготовленный массив." << std::endl;
     }
     else {
         int count = 0;
         int minValue = 0;
         int maxValue = 0;
 
-        std::cout << "Введите количество чисел: ";
+        std::cout << Resources::get("Count");
         std::cin >> count;
-        std::cout << "Введите минимальное значение: ";
+        std::cout << Resources::get("MinValue");
         std::cin >> minValue;
-        std::cout << "Введите максимальное значение: ";
+        std::cout << Resources::get("MaxValue");
         std::cin >> maxValue;
 
         baseArray = generateRandomVector(count, minValue, maxValue);
-        std::cout << "\nСгенерирован случайный массив." << std::endl;
     }
 
-    printIntVector(baseArray, "Исходный массив");
+    printIntVector(baseArray, Resources::get("SourceArray"));
 
-    // Задание 3а
     std::vector<int> arrayForTaskA = baseArray;
     squarePrimeNumbers(arrayForTaskA);
-    std::cout << "\nЗадание 3а: простые числа в квадрате" << std::endl;
-    printIntVector(arrayForTaskA, "Результат");
+    std::cout << "\n" << Resources::get("Task3A") << std::endl;
+    printIntVector(arrayForTaskA, Resources::get("Result"));
 
-    // Задание 3б
     std::vector<int> arrayForTaskB = baseArray;
     sortOddAscEvenDesc(arrayForTaskB);
-    std::cout << "\nЗадание 3б: нечётные, чётные" << std::endl;
-    printIntVector(arrayForTaskB, "Результат");
+    std::cout << "\n" << Resources::get("Task3B") << std::endl;
+    printIntVector(arrayForTaskB, Resources::get("Result"));
 
-    // Задание 3в
     int low, high;
-    std::cout << "\nЗадание 3в: уникальные числа в диапазоне" << std::endl;
-    std::cout << "Введите нижнюю границу диапазона: ";
+    std::cout << "\n" << Resources::get("Task3C") << std::endl;
+    std::cout << Resources::get("LowBound");
     std::cin >> low;
-    std::cout << "Введите верхнюю границу диапазона: ";
+    std::cout << Resources::get("HighBound");
     std::cin >> high;
 
     std::vector<int> arrayForTaskC = filterUniqueInRange(baseArray, low, high);
-    printIntVector(arrayForTaskC, "Уникальные числа в диапазоне");
+    printIntVector(arrayForTaskC, Resources::get("Result"));
 
-    // Сохранение в файл result_task3.txt
     const std::string outputFileName = "result_task3.txt";
     FILE* outputPointer = fopen(outputFileName.c_str(), "w");
     if (!outputPointer) {
-        std::cout << "Ошибка при создании файла " << outputFileName << std::endl;
+        std::cout << "Error: cannot create file" << std::endl;
         return;
     }
 
-    fprintf(outputPointer, "Задание 3\n\n");
-
-    fprintf(outputPointer, "Исходный массив: ");
+    fprintf(outputPointer, "Task 3\n\n");
+    fprintf(outputPointer, "Source array: ");
     for (size_t i = 0; i < baseArray.size(); i++) {
-        if (i > 0) {
-            fprintf(outputPointer, ", ");
-        }
+        if (i > 0) fprintf(outputPointer, ", ");
         fprintf(outputPointer, "%d", baseArray[i]);
     }
     fprintf(outputPointer, "\n\n");
 
-    fprintf(outputPointer, "Задание 3а: простые числа в квадрате\n");
-    fprintf(outputPointer, "Результат: ");
+    fprintf(outputPointer, "Task 3a (primes squared): ");
     for (size_t i = 0; i < arrayForTaskA.size(); i++) {
-        if (i > 0) {
-            fprintf(outputPointer, ", ");
-        }
+        if (i > 0) fprintf(outputPointer, ", ");
         fprintf(outputPointer, "%d", arrayForTaskA[i]);
     }
     fprintf(outputPointer, "\n\n");
 
-    fprintf(outputPointer, "Задание 3б: нечётные по возрастанию, чётные по убыванию\n");
-    fprintf(outputPointer, "Результат: ");
+    fprintf(outputPointer, "Task 3b (odd asc, even desc): ");
     for (size_t i = 0; i < arrayForTaskB.size(); i++) {
-        if (i > 0) {
-            fprintf(outputPointer, ", ");
-        }
+        if (i > 0) fprintf(outputPointer, ", ");
         fprintf(outputPointer, "%d", arrayForTaskB[i]);
     }
     fprintf(outputPointer, "\n\n");
 
-    fprintf(outputPointer, "Задание 3в: уникальные числа в диапазоне [%d; %d]\n", low, high);
-    fprintf(outputPointer, "Результат: ");
+    fprintf(outputPointer, "Task 3c (range [%d; %d]): ", low, high);
     for (size_t i = 0; i < arrayForTaskC.size(); i++) {
-        if (i > 0) {
-            fprintf(outputPointer, ", ");
-        }
+        if (i > 0) fprintf(outputPointer, ", ");
         fprintf(outputPointer, "%d", arrayForTaskC[i]);
     }
     fprintf(outputPointer, "\n");
 
     fclose(outputPointer);
-    std::cout << "\nРезультаты задания 3 сохранены в файл: " << outputFileName << std::endl;
+    std::cout << "\n" << Resources::get("SavedTo") << outputFileName << std::endl;
 }
